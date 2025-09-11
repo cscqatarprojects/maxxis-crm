@@ -137,6 +137,8 @@ class LeadRepository extends Repository
         ], $data));
 
         $this->attributeValueRepository->save(array_merge($data, [
+            "entity_type" => "leads",
+            "entity_type" => "leads",
             'entity_id' => $lead->id,
         ]));
 
@@ -217,6 +219,8 @@ class LeadRepository extends Repository
             }
 
             $this->attributeValueRepository->save(array_merge($data, [
+            "entity_type" => "leads",
+            "entity_type" => "leads",
                 'entity_id' => $lead->id,
             ]), $attributes);
 
@@ -224,6 +228,8 @@ class LeadRepository extends Repository
         }
 
         $this->attributeValueRepository->save(array_merge($data, [
+            "entity_type" => "leads",
+            "entity_type" => "leads",
             'entity_id' => $lead->id,
         ]));
 

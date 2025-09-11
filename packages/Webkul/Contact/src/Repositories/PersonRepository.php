@@ -70,6 +70,8 @@ class PersonRepository extends Repository
         $person = parent::create($data);
 
         $this->attributeValueRepository->save(array_merge($data, [
+            "entity_type" => "persons",
+            "entity_type" => "persons",
             'entity_id' => $person->id,
         ]));
 
@@ -112,6 +114,8 @@ class PersonRepository extends Repository
                 ->get();
 
             $this->attributeValueRepository->save(array_merge($data, [
+            "entity_type" => "persons",
+            "entity_type" => "persons",
                 'entity_id' => $person->id,
             ]), $attributes);
 
@@ -119,6 +123,8 @@ class PersonRepository extends Repository
         }
 
         $this->attributeValueRepository->save(array_merge($data, [
+            "entity_type" => "persons",
+            "entity_type" => "persons",
             'entity_id' => $person->id,
         ]));
 
