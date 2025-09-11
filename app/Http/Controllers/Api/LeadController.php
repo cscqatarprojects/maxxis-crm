@@ -39,26 +39,26 @@ class LeadController extends Controller
         try {
             // Validate the incoming request
             $validator = Validator::make($request->all(), [
-                'title' => 'required|string|max:255',
-                'contact_name' => 'required|string|max:255',
-                'car_make' => 'nullable|string|max:100',
-                'car_model' => 'nullable|string|max:100',
-                'car_year' => 'nullable|string|max:4',
-                'car_type' => 'nullable|string|max:50',
-                'tire_size' => 'nullable|string|max:50',
-                'lead_type' => 'nullable|string|max:100',
-                'lead_source' => 'nullable|string|max:100',
-                'description' => 'nullable|string',
+                'title'               => 'required|string|max:255',
+                'contact_name'        => 'required|string|max:255',
+                'car_make'            => 'nullable|string|max:100',
+                'car_model'           => 'nullable|string|max:100',
+                'car_year'            => 'nullable|string|max:4',
+                'car_type'            => 'nullable|string|max:50',
+                'tire_size'           => 'nullable|string|max:50',
+                'lead_type'           => 'nullable|string|max:100',
+                'lead_source'         => 'nullable|string|max:100',
+                'description'         => 'nullable|string',
                 'expected_close_date' => 'nullable|date|after:today',
-                'lead_value' => 'nullable|numeric|min:0',
-                'sales_owner' => 'nullable|email|exists:users,email',
+                'lead_value'          => 'nullable|numeric|min:0',
+                'sales_owner'         => 'nullable|email|exists:users,email',
             ]);
 
             if ($validator->fails()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Validation failed',
-                    'errors' => $validator->errors()
+                    'errors'  => $validator->errors(),
                 ], 422);
             }
 
@@ -82,22 +82,22 @@ class LeadController extends Controller
 
                 // Find sales owner user
                 $user = null;
-                if (!empty($data['sales_owner'])) {
+                if (! empty($data['sales_owner'])) {
                     $user = $this->userRepository->findWhere(['email' => $data['sales_owner']])->first();
                 }
 
                 // Prepare lead data
                 $leadData = [
-                    'title' => $data['title'],
-                    'description' => $this->buildDescription($data),
-                    'lead_value' => $data['lead_value'] ?? 0,
-                    'status' => 1, // Active
-                    'expected_close_date' => $data['expected_close_date'] ?? now()->addDays(30)->format('Y-m-d'),
-                    'user_id' => $user ? $user->id : 1, // Default to admin user if not found
-                    'person_id' => $person->id,
-                    'lead_source_id' => $leadSource->id,
-                    'lead_type_id' => $leadType->id,
-                    'lead_pipeline_id' => $pipeline->id,
+                    'title'                  => $data['title'],
+                    'description'            => $this->buildDescription($data),
+                    'lead_value'             => $data['lead_value'] ?? 0,
+                    'status'                 => 1, // Active
+                    'expected_close_date'    => $data['expected_close_date'] ?? now()->addDays(30)->format('Y-m-d'),
+                    'user_id'                => $user ? $user->id : 1, // Default to admin user if not found
+                    'person_id'              => $person->id,
+                    'lead_source_id'         => $leadSource->id,
+                    'lead_type_id'           => $leadType->id,
+                    'lead_pipeline_id'       => $pipeline->id,
                     'lead_pipeline_stage_id' => $stage->id,
                 ];
 
@@ -110,47 +110,47 @@ class LeadController extends Controller
                 DB::commit();
 
                 Log::info('Lead created successfully via API', [
-                    'lead_id' => $lead->id,
-                    'title' => $lead->title,
-                    'person_id' => $person->id
+                    'lead_id'   => $lead->id,
+                    'title'     => $lead->title,
+                    'person_id' => $person->id,
                 ]);
 
                 return response()->json([
                     'success' => true,
                     'message' => 'Lead created successfully in CRM',
-                    'data' => [
-                        'lead_id' => $lead->id,
-                        'title' => $lead->title,
+                    'data'    => [
+                        'lead_id'     => $lead->id,
+                        'title'       => $lead->title,
                         'person_name' => $person->name,
-                        'status' => 'created',
-                        'created_at' => $lead->created_at->format('Y-m-d H:i:s'),
-                    ]
+                        'status'      => 'created',
+                        'created_at'  => $lead->created_at->format('Y-m-d H:i:s'),
+                    ],
                 ], 201);
 
             } catch (\Exception $e) {
                 DB::rollBack();
                 Log::error('Failed to create lead via API', [
                     'error' => $e->getMessage(),
-                    'data' => $data
+                    'data'  => $data,
                 ]);
 
                 return response()->json([
                     'success' => false,
                     'message' => 'Failed to create lead in CRM',
-                    'error' => $e->getMessage()
+                    'error'   => $e->getMessage(),
                 ], 500);
             }
 
         } catch (\Exception $e) {
             Log::error('API Lead creation error', [
-                'error' => $e->getMessage(),
-                'request_data' => $request->all()
+                'error'        => $e->getMessage(),
+                'request_data' => $request->all(),
             ]);
 
             return response()->json([
                 'success' => false,
                 'message' => 'Internal server error',
-                'error' => $e->getMessage()
+                'error'   => $e->getMessage(),
             ], 500);
         }
     }
@@ -161,20 +161,20 @@ class LeadController extends Controller
     private function findOrCreatePerson(array $data)
     {
         $personData = [
-            "entity_type" => "persons",
-            'name' => $data['contact_name'],
-            'emails' => [
+            'entity_type' => 'persons',
+            'name'        => $data['contact_name'],
+            'emails'      => [
                 [
-                    'value' => 'chatbot-' . time() . '@example.com',
-                    'label' => 'work'
-                ]
-            ]
+                    'value' => 'chatbot-'.time().'@example.com',
+                    'label' => 'work',
+                ],
+            ],
         ];
 
         // Try to find existing person by name
         $person = $this->personRepository->findWhere(['name' => $data['contact_name']])->first();
 
-        if (!$person) {
+        if (! $person) {
             $person = $this->personRepository->create($personData);
         }
 
@@ -188,10 +188,10 @@ class LeadController extends Controller
     {
         $source = $this->sourceRepository->findWhere(['name' => $sourceName])->first();
 
-        if (!$source) {
+        if (! $source) {
             $source = $this->sourceRepository->create([
-                'name' => $sourceName,
-                'is_default' => 0
+                'name'       => $sourceName,
+                'is_default' => 0,
             ]);
         }
 
@@ -205,10 +205,10 @@ class LeadController extends Controller
     {
         $type = $this->typeRepository->findWhere(['name' => $typeName])->first();
 
-        if (!$type) {
+        if (! $type) {
             $type = $this->typeRepository->create([
-                'name' => $typeName,
-                'is_default' => 0
+                'name'       => $typeName,
+                'is_default' => 0,
             ]);
         }
 
@@ -221,17 +221,27 @@ class LeadController extends Controller
     private function buildDescription(array $data): string
     {
         $description = $data['description'] ?? '';
-        
-        $carDetails = [];
-        if (!empty($data['car_make'])) $carDetails[] = "Make: {$data['car_make']}";
-        if (!empty($data['car_model'])) $carDetails[] = "Model: {$data['car_model']}";
-        if (!empty($data['car_year'])) $carDetails[] = "Year: {$data['car_year']}";
-        if (!empty($data['car_type'])) $carDetails[] = "Type: {$data['car_type']}";
-        if (!empty($data['tire_size'])) $carDetails[] = "Tire Size: {$data['tire_size']}";
 
-        if (!empty($carDetails)) {
-            $carInfo = "Car Details: " . implode(', ', $carDetails);
-            $description = $description ? $description . "\n\n" . $carInfo : $carInfo;
+        $carDetails = [];
+        if (! empty($data['car_make'])) {
+            $carDetails[] = "Make: {$data['car_make']}";
+        }
+        if (! empty($data['car_model'])) {
+            $carDetails[] = "Model: {$data['car_model']}";
+        }
+        if (! empty($data['car_year'])) {
+            $carDetails[] = "Year: {$data['car_year']}";
+        }
+        if (! empty($data['car_type'])) {
+            $carDetails[] = "Type: {$data['car_type']}";
+        }
+        if (! empty($data['tire_size'])) {
+            $carDetails[] = "Tire Size: {$data['tire_size']}";
+        }
+
+        if (! empty($carDetails)) {
+            $carInfo = 'Car Details: '.implode(', ', $carDetails);
+            $description = $description ? $description."\n\n".$carInfo : $carInfo;
         }
 
         return $description;

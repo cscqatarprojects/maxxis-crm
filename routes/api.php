@@ -24,13 +24,13 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 Route::prefix('v1')->group(function () {
     // Lead creation endpoint for chatbot webhook
     Route::post('leads', [LeadController::class, 'store'])->name('api.leads.store');
-    
+
     // Health check endpoint
     Route::get('health', function () {
         return response()->json([
-            'status' => 'ok',
+            'status'    => 'ok',
             'timestamp' => now()->toISOString(),
-            'service' => 'Maxxiss CRM API'
+            'service'   => 'Maxxiss CRM API',
         ]);
     })->name('api.health');
 });
