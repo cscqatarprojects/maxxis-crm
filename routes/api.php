@@ -17,3 +17,9 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
+
+/* // add method for  create leads var/www/html/maxxis-crm/routes/api.php
+Route::get('data', function(){
+    return 1;
+});
+*/
