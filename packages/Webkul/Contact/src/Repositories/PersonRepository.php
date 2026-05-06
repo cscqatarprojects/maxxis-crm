@@ -51,7 +51,7 @@ class PersonRepository extends Repository
     /**
      * Create.
      *
-     * @return \Webkul\Contact\Contracts\Person
+     * @return Person
      */
     public function create(array $data)
     {
@@ -81,7 +81,7 @@ class PersonRepository extends Repository
     /**
      * Update.
      *
-     * @return \Webkul\Contact\Contracts\Person
+     * @return Person
      */
     public function update(array $data, $id, $attributes = [])
     {
