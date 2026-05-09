@@ -5,6 +5,7 @@ namespace Webkul\Admin\Http\Controllers\Mail;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
@@ -62,7 +63,7 @@ class EmailController extends Controller
     /**
      * Display a resource.
      *
-     * @return \Illuminate\View\View
+     * @return View
      */
     public function view()
     {
@@ -97,7 +98,7 @@ class EmailController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function store()
     {
@@ -118,7 +119,7 @@ class EmailController extends Controller
                 $this->emailRepository->update([
                     'folders' => ['sent'],
                 ], $email->id);
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
             }
         }
 
@@ -146,7 +147,7 @@ class EmailController extends Controller
      * Update the specified resource in storage.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function update($id)
     {
@@ -169,7 +170,7 @@ class EmailController extends Controller
                 $this->emailRepository->update([
                     'folders' => ['inbox', 'sent'],
                 ], $email->id);
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
             }
         }
 
@@ -200,7 +201,7 @@ class EmailController extends Controller
     /**
      * Run process inbound parse email.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function inboundParse(InboundEmailProcessor $inboundEmailProcessor)
     {
@@ -213,7 +214,7 @@ class EmailController extends Controller
      * Download file from storage
      *
      * @param  int  $id
-     * @return \Illuminate\View\View
+     * @return View
      */
     public function download($id)
     {
@@ -221,7 +222,7 @@ class EmailController extends Controller
 
         try {
             return Storage::download($attachment->path);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             session()->flash('error', $e->getMessage());
 
             return redirect()->back();
@@ -291,7 +292,7 @@ class EmailController extends Controller
             }
 
             return redirect()->route('admin.mail.index', ['route' => 'inbox']);
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             if (request()->ajax()) {
                 return response()->json([
                     'message' => trans('admin::app.mail.delete-failed'),
@@ -327,7 +328,7 @@ class EmailController extends Controller
             return response()->json([
                 'message' => trans('admin::app.mail.delete-success'),
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 'message' => trans('admin::app.mail.delete-success'),
             ]);

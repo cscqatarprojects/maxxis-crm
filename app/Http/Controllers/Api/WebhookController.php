@@ -8,6 +8,13 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Webkul\Contact\Repositories\PersonRepository;
+use Webkul\Lead\Repositories\LeadRepository;
+use Webkul\Lead\Repositories\PipelineRepository;
+use Webkul\Lead\Repositories\SourceRepository;
+use Webkul\Lead\Repositories\StageRepository;
+use Webkul\Lead\Repositories\TypeRepository;
+use Webkul\User\Repositories\UserRepository;
 
 class WebhookController extends Controller
 {
@@ -53,13 +60,13 @@ class WebhookController extends Controller
 
             // Forward to lead controller
             $leadController = new LeadController(
-                app(\Webkul\Lead\Repositories\LeadRepository::class),
-                app(\Webkul\Contact\Repositories\PersonRepository::class),
-                app(\Webkul\User\Repositories\UserRepository::class),
-                app(\Webkul\Lead\Repositories\SourceRepository::class),
-                app(\Webkul\Lead\Repositories\TypeRepository::class),
-                app(\Webkul\Lead\Repositories\PipelineRepository::class),
-                app(\Webkul\Lead\Repositories\StageRepository::class)
+                app(LeadRepository::class),
+                app(PersonRepository::class),
+                app(UserRepository::class),
+                app(SourceRepository::class),
+                app(TypeRepository::class),
+                app(PipelineRepository::class),
+                app(StageRepository::class)
             );
 
             return $leadController->store($request);
