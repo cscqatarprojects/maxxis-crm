@@ -38,5 +38,6 @@ Route::prefix('v1')->group(function () {
 // Webhook routes (no authentication required for external services)
 Route::prefix('webhook')->group(function () {
     Route::post('chatbot/lead', [WebhookController::class, 'handleChatbotLead'])->name('webhook.chatbot.lead');
+    Route::post('chatbot/lead/{lead_id}/note', [WebhookController::class, 'handleChatbotLeadNote'])->name('webhook.chatbot.lead.note');
     Route::get('health', [WebhookController::class, 'health'])->name('webhook.health');
 });

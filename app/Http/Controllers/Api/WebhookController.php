@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
@@ -65,6 +66,100 @@ class WebhookController extends Controller
 
         } catch (\Exception $e) {
             Log::error('Webhook processing error', [
+                'error'        => $e->getMessage(),
+                'trace'        => $e->getTraceAsString(),
+                'request_data' => $request->all(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Webhook processing failed',
+                'error'   => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Handle chatbot webhook for adding a conversation note to a lead
+     */
+    public function handleChatbotLeadNote(Request $request, $lead_id): JsonResponse
+    {
+        try {
+            Log::info('Chatbot note webhook received', [
+                'lead_id' => $lead_id,
+                'headers' => $request->headers->all(),
+                'body'    => $request->all(),
+            ]);
+
+            $validator = Validator::make($request->all(), [
+                'note' => 'required|string',
+            ]);
+
+            if ($validator->fails()) {
+                Log::warning('Chatbot note webhook validation failed', [
+                    'errors' => $validator->errors()->toArray(),
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors'  => $validator->errors(),
+                ], 422);
+            }
+
+            $leadRepository     = app(\Webkul\Lead\Repositories\LeadRepository::class);
+            $activityRepository = app(\Webkul\Activity\Repositories\ActivityRepository::class);
+
+            $lead = $leadRepository->find($lead_id);
+
+            if (! $lead) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Lead not found',
+                ], 404);
+            }
+
+            DB::beginTransaction();
+
+            try {
+                $activity = $activityRepository->create([
+                    'type'    => 'note',
+                    'title'   => 'Chatbot Conversation',
+                    'comment' => $request->input('note'),
+                    'is_done' => 1,
+                    'user_id' => $lead->user_id,
+                ]);
+
+                $lead->activities()->attach($activity->id);
+
+                DB::commit();
+
+                Log::info('Chatbot note created successfully', [
+                    'lead_id'     => $lead->id,
+                    'activity_id' => $activity->id,
+                ]);
+
+                return response()->json([
+                    'success'     => true,
+                    'activity_id' => $activity->id,
+                ], 201);
+
+            } catch (\Exception $e) {
+                DB::rollBack();
+                Log::error('Failed to create chatbot note', [
+                    'error'   => $e->getMessage(),
+                    'lead_id' => $lead_id,
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to create note',
+                    'error'   => $e->getMessage(),
+                ], 500);
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Chatbot note webhook processing error', [
                 'error'        => $e->getMessage(),
                 'trace'        => $e->getTraceAsString(),
                 'request_data' => $request->all(),
