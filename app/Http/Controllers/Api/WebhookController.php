@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Webkul\Activity\Repositories\ActivityRepository;
 use Webkul\Contact\Repositories\PersonRepository;
 use Webkul\Lead\Repositories\LeadRepository;
 use Webkul\Lead\Repositories\PipelineRepository;
@@ -114,8 +115,8 @@ class WebhookController extends Controller
                 ], 422);
             }
 
-            $leadRepository     = app(\Webkul\Lead\Repositories\LeadRepository::class);
-            $activityRepository = app(\Webkul\Activity\Repositories\ActivityRepository::class);
+            $leadRepository = app(LeadRepository::class);
+            $activityRepository = app(ActivityRepository::class);
 
             $lead = $leadRepository->find($lead_id);
 
