@@ -1,0 +1,22 @@
+name: SonarQube
+
+on:
+  push:
+    branches:
+      - '**'
+jobs:
+  sonar:
+    name: SonarQube Scan
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v3
+        continue-on-error: true
+        env:
+          SONAR_TOKEN: sqp_7e8b3cb108195b27f1f781d6a637e5350745d39f
+          SONAR_HOST_URL: https://qa-projects.ncitsolutions.com
