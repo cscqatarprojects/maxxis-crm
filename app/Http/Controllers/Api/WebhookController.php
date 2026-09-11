@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Webkul\Activity\Repositories\ActivityRepository;
+use Webkul\Attribute\Repositories\AttributeRepository;
+use Webkul\Attribute\Repositories\AttributeValueRepository;
 use Webkul\Contact\Repositories\PersonRepository;
 use Webkul\Lead\Repositories\LeadRepository;
 use Webkul\Lead\Repositories\PipelineRepository;
@@ -39,6 +41,7 @@ class WebhookController extends Controller
                 'car_year'            => 'nullable|string|max:4',
                 'car_type'            => 'nullable|string|max:50',
                 'tire_size'           => 'nullable|string|max:50',
+                'mobile'              => 'nullable|string|max:20',
                 'lead_type'           => 'nullable|string|max:100',
                 'lead_source'         => 'nullable|string|max:100',
                 'description'         => 'nullable|string',
@@ -171,6 +174,88 @@ class WebhookController extends Controller
                 'error'        => $e->getMessage(),
                 'trace'        => $e->getTraceAsString(),
                 'request_data' => $request->all(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Webhook processing failed',
+                'error'   => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Handle chatbot webhook for updating a lead's tire size attribute.
+     *
+     * The chatbot sends the full, accumulated size string for the session
+     * (e.g. "205/55R16, 225/60R16") so a customer who asks about several sizes
+     * keeps a single lead whose Tire Size field lists them all.
+     */
+    public function handleChatbotLeadTireSize(Request $request, $lead_id): JsonResponse
+    {
+        try {
+            Log::info('Chatbot tire-size webhook received', [
+                'lead_id' => $lead_id,
+                'body'    => $request->all(),
+            ]);
+
+            $validator = Validator::make($request->all(), [
+                'tire_size' => 'required|string|max:255',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors'  => $validator->errors(),
+                ], 422);
+            }
+
+            $lead = app(LeadRepository::class)->find($lead_id);
+
+            if (! $lead) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Lead not found',
+                ], 404);
+            }
+
+            $attribute = app(AttributeRepository::class)->findOneWhere([
+                'entity_type' => 'leads',
+                'code'        => 'tire_size',
+            ]);
+
+            if (! $attribute) {
+                Log::warning('tire_size lead attribute is not configured; cannot store the value as a field');
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'tire_size lead attribute is not configured in the CRM',
+                ], 422);
+            }
+
+            // Save only the tire_size attribute value; no lead columns are touched.
+            app(AttributeValueRepository::class)->save([
+                'entity_type' => 'leads',
+                'entity_id'   => $lead->id,
+                'tire_size'   => $request->input('tire_size'),
+            ], collect([$attribute]));
+
+            Log::info('Chatbot tire size updated', [
+                'lead_id'   => $lead->id,
+                'tire_size' => $request->input('tire_size'),
+            ]);
+
+            return response()->json([
+                'success'   => true,
+                'lead_id'   => $lead->id,
+                'tire_size' => $request->input('tire_size'),
+            ], 200);
+
+        } catch (\Exception $e) {
+            Log::error('Chatbot tire-size webhook processing error', [
+                'error'   => $e->getMessage(),
+                'lead_id' => $lead_id,
             ]);
 
             return response()->json([

@@ -50,6 +50,17 @@ class LeadDataGrid extends DataGrid
     {
         $tablePrefix = DB::getTablePrefix();
 
+        // Resolve the "tire_size" lead attribute so its value can be joined in
+        // as a real column (chatbot leads store the size there). Guarded with a
+        // fallback id of 0 so the grid still works if the attribute is missing.
+        $tireSizeAttributeId = app(\Webkul\Attribute\Repositories\AttributeRepository::class)
+            ->findOneWhere(['entity_type' => 'leads', 'code' => 'tire_size'])
+            ?->id ?? 0;
+
+        $carTypeAttributeId = app(\Webkul\Attribute\Repositories\AttributeRepository::class)
+            ->findOneWhere(['entity_type' => 'leads', 'code' => 'car_type'])
+            ?->id ?? 0;
+
         $queryBuilder = DB::table('leads')
             ->addSelect(
                 'leads.id',
@@ -69,6 +80,8 @@ class LeadDataGrid extends DataGrid
                 'tags.name as tag_name',
                 'lead_pipelines.rotten_days as pipeline_rotten_days',
                 'lead_pipeline_stages.code as stage_code',
+                'lead_tire_sizes.text_value as tire_size',
+                'lead_car_types.text_value as car_type',
                 DB::raw('CASE WHEN DATEDIFF(NOW(),'.$tablePrefix.'leads.created_at) >='.$tablePrefix.'lead_pipelines.rotten_days THEN 1 ELSE 0 END as rotten_lead'),
             )
             ->leftJoin('users', 'leads.user_id', '=', 'users.id')
@@ -79,6 +92,16 @@ class LeadDataGrid extends DataGrid
             ->leftJoin('lead_pipelines', 'leads.lead_pipeline_id', '=', 'lead_pipelines.id')
             ->leftJoin('lead_tags', 'leads.id', '=', 'lead_tags.lead_id')
             ->leftJoin('tags', 'tags.id', '=', 'lead_tags.tag_id')
+            ->leftJoin('attribute_values as lead_tire_sizes', function ($join) use ($tireSizeAttributeId) {
+                $join->on('lead_tire_sizes.entity_id', '=', 'leads.id')
+                    ->where('lead_tire_sizes.entity_type', 'leads')
+                    ->where('lead_tire_sizes.attribute_id', $tireSizeAttributeId);
+            })
+            ->leftJoin('attribute_values as lead_car_types', function ($join) use ($carTypeAttributeId) {
+                $join->on('lead_car_types.entity_id', '=', 'leads.id')
+                    ->where('lead_car_types.entity_type', 'leads')
+                    ->where('lead_car_types.attribute_id', $carTypeAttributeId);
+            })
             ->groupBy('leads.id')
             ->where('leads.lead_pipeline_id', $this->pipeline->id);
 
@@ -99,6 +122,8 @@ class LeadDataGrid extends DataGrid
         $this->addFilter('type', 'lead_pipeline_stages.code');
         $this->addFilter('stage', 'lead_pipeline_stages.id');
         $this->addFilter('tag_name', 'tags.name');
+        $this->addFilter('tire_size', 'lead_tire_sizes.text_value');
+        $this->addFilter('car_type', 'lead_car_types.text_value');
         $this->addFilter('expected_close_date', 'leads.expected_close_date');
         $this->addFilter('created_at', 'leads.created_at');
         $this->addFilter('rotten_lead', DB::raw('DATEDIFF(NOW(), '.$tablePrefix.'leads.created_at) >= '.$tablePrefix.'lead_pipelines.rotten_days'));
@@ -142,6 +167,24 @@ class LeadDataGrid extends DataGrid
             'type'       => 'string',
             'searchable' => true,
             'sortable'   => true,
+        ]);
+
+        $this->addColumn([
+            'index'      => 'tire_size',
+            'label'      => 'Tire Size',
+            'type'       => 'string',
+            'searchable' => false,
+            'sortable'   => false,
+            'filterable' => true,
+        ]);
+
+        $this->addColumn([
+            'index'      => 'car_type',
+            'label'      => 'Car Type',
+            'type'       => 'string',
+            'searchable' => false,
+            'sortable'   => false,
+            'filterable' => true,
         ]);
 
         $this->addColumn([

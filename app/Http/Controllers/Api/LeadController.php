@@ -46,6 +46,7 @@ class LeadController extends Controller
                 'car_year'            => 'nullable|string|max:4',
                 'car_type'            => 'nullable|string|max:50',
                 'tire_size'           => 'nullable|string|max:50',
+                'mobile'              => 'nullable|string|max:20',
                 'lead_type'           => 'nullable|string|max:100',
                 'lead_source'         => 'nullable|string|max:100',
                 'description'         => 'nullable|string',
@@ -101,11 +102,20 @@ class LeadController extends Controller
                     'lead_pipeline_stage_id' => $stage->id,
                 ];
 
+                // Map incoming payload onto lead custom attributes so their
+                // values are stored as structured fields (not only in the
+                // description). Each key must match an existing Leads attribute
+                // "code"; keys with no matching attribute are ignored.
+                if (array_key_exists('tire_size', $data)) {
+                    $leadData['tire_size'] = $data['tire_size'];
+                }
+
+                if (array_key_exists('car_type', $data)) {
+                    $leadData['car_type'] = $data['car_type'];
+                }
+
                 // Create the lead
                 $lead = $this->leadRepository->create($leadData);
-
-                // Add custom attributes for car details
-                $this->addCustomAttributes($lead, $data);
 
                 DB::commit();
 
@@ -160,19 +170,40 @@ class LeadController extends Controller
      */
     private function findOrCreatePerson(array $data)
     {
+        $mobile = trim((string) ($data['mobile'] ?? $data['phone_number'] ?? ''));
+
+        // The persons.emails column is NOT NULL, so pass an empty array rather
+        // than inventing a fake address: the chatbot never collects an email,
+        // and a placeholder would only pollute the person's unique_id.
         $personData = [
             'entity_type' => 'persons',
             'name'        => $data['contact_name'],
-            'emails'      => [
-                [
-                    'value' => 'chatbot-'.time().'@example.com',
-                    'label' => 'work',
-                ],
-            ],
+            'emails'      => [],
         ];
 
-        // Try to find existing person by name
-        $person = $this->personRepository->findWhere(['name' => $data['contact_name']])->first();
+        if ($mobile !== '') {
+            $personData['contact_numbers'] = [
+                [
+                    'value' => $mobile,
+                    'label' => 'work',
+                ],
+            ];
+        }
+
+        // Match an existing person by phone number first (more reliable than
+        // name), then fall back to name so anonymous "Guest User" leads don't
+        // all collapse onto one another.
+        $person = null;
+
+        if ($mobile !== '') {
+            $person = $this->personRepository->findWhere([
+                ['contact_numbers', 'like', '%'.$mobile.'%'],
+            ])->first();
+        }
+
+        if (! $person) {
+            $person = $this->personRepository->findWhere(['name' => $data['contact_name']])->first();
+        }
 
         if (! $person) {
             $person = $this->personRepository->create($personData);
@@ -245,16 +276,5 @@ class LeadController extends Controller
         }
 
         return $description;
-    }
-
-    /**
-     * Add custom attributes for car details
-     */
-    private function addCustomAttributes($lead, array $data)
-    {
-        // This would require custom attribute setup in the CRM
-        // For now, we'll include the car details in the description
-        // In a full implementation, you'd create custom attributes for:
-        // - car_make, car_model, car_year, car_type, tire_size
     }
 }

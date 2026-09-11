@@ -39,5 +39,6 @@ Route::prefix('v1')->group(function () {
 Route::prefix('webhook')->group(function () {
     Route::post('chatbot/lead', [WebhookController::class, 'handleChatbotLead'])->name('webhook.chatbot.lead');
     Route::post('chatbot/lead/{lead_id}/note', [WebhookController::class, 'handleChatbotLeadNote'])->name('webhook.chatbot.lead.note');
+    Route::post('chatbot/lead/{lead_id}/tire-size', [WebhookController::class, 'handleChatbotLeadTireSize'])->name('webhook.chatbot.lead.tire-size');
     Route::get('health', [WebhookController::class, 'health'])->name('webhook.health');
 });
