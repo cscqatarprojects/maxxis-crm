@@ -4,6 +4,7 @@ namespace Webkul\Admin\DataGrids\Lead;
 
 use Illuminate\Contracts\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
+use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Contact\Repositories\PersonRepository;
 use Webkul\Contract\Repositories\Pipeline;
 use Webkul\DataGrid\DataGrid;
@@ -53,11 +54,11 @@ class LeadDataGrid extends DataGrid
         // Resolve the "tire_size" lead attribute so its value can be joined in
         // as a real column (chatbot leads store the size there). Guarded with a
         // fallback id of 0 so the grid still works if the attribute is missing.
-        $tireSizeAttributeId = app(\Webkul\Attribute\Repositories\AttributeRepository::class)
+        $tireSizeAttributeId = app(AttributeRepository::class)
             ->findOneWhere(['entity_type' => 'leads', 'code' => 'tire_size'])
             ?->id ?? 0;
 
-        $carTypeAttributeId = app(\Webkul\Attribute\Repositories\AttributeRepository::class)
+        $carTypeAttributeId = app(AttributeRepository::class)
             ->findOneWhere(['entity_type' => 'leads', 'code' => 'car_type'])
             ?->id ?? 0;
 
