@@ -122,8 +122,41 @@
                                 value="1"
                                 :label="trans('admin::app.settings.webforms.create.create-lead')"
                                 :checked="false"
+                                v-model="createLead"
                             />
 
+                        </x-admin::form.control-group>
+
+                        <!-- Lead Type -->
+                        <x-admin::form.control-group>
+                            <x-admin::form.control-group.label for="lead_type_id">
+                                @lang('admin::app.settings.webforms.create.lead-type')
+                            </x-admin::form.control-group.label>
+
+                            <x-admin::form.control-group.control
+                                type="select"
+                                name="lead_type_id"
+                                id="lead_type_id"
+                                :value="old('lead_type_id')"
+                                :label="trans('admin::app.settings.webforms.create.lead-type')"
+                            >
+                                <option value="">
+                                    @lang('admin::app.settings.webforms.create.lead-type-default')
+                                </option>
+
+                                @foreach ($leadTypes as $leadType)
+                                    <option
+                                        value="{{ $leadType->id }}"
+                                        {{ old('lead_type_id') == $leadType->id ? 'selected' : '' }}
+                                    >
+                                        {{ $leadType->name }}
+                                    </option>
+                                @endforeach
+                            </x-admin::form.control-group.control>
+
+                            <p class="mt-1 text-xs text-gray-600 dark:text-gray-300">
+                                @lang('admin::app.settings.webforms.create.lead-type-info')
+                            </p>
                         </x-admin::form.control-group>
 
                         <!-- Customize Web-form -->
@@ -283,6 +316,7 @@
                                 </x-slot>
 
                                 <x-slot:menu class="max-h-80 overflow-y-auto !p-0 dark:border-gray-800">
+                                    <!-- Lead fields only make sense while the form creates a lead. -->
                                     <template v-if="createLead">
                                         <div class="m-2 text-lg font-bold">@lang('admin::app.settings.webforms.create.leads')</div>
 
@@ -297,19 +331,19 @@
                                         </span>
                                     </template>
 
-                                    <template v-else>
-                                        <div class="m-2 text-lg font-bold">@lang('admin::app.settings.webforms.create.person')</div>
+                                    <!-- Person fields stay available either way: a lead is always
+                                         attached to a person, so both sets belong on the form. -->
+                                    <div class="m-2 text-lg font-bold">@lang('admin::app.settings.webforms.create.person')</div>
 
-                                        <span
-                                            v-for="attribute in groupedAttributes.persons"
-                                            class="whitespace-no-wrap flex cursor-pointer items-center justify-between gap-1.5 rounded-t px-2 py-2 text-sm text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-950"
-                                            @click="addAttribute(attribute)"
-                                        >
-                                            <div class="items flex items-center gap-1.5">
-                                                @{{ attribute.name }}
-                                            </div>
-                                        </span>
-                                    </template>
+                                    <span
+                                        v-for="attribute in groupedAttributes.persons"
+                                        class="whitespace-no-wrap flex cursor-pointer items-center justify-between gap-1.5 rounded-t px-2 py-2 text-sm text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-950"
+                                        @click="addAttribute(attribute)"
+                                    >
+                                        <div class="items flex items-center gap-1.5">
+                                            @{{ attribute.name }}
+                                        </div>
+                                    </span>
                                 </x-slot>
                             </x-admin::dropdown>
 

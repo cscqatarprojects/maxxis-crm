@@ -564,6 +564,9 @@ return [
                     'view'              => 'View',
                     'name'              => 'Name',
                     'organization-name' => 'Organization Name',
+                    'is-wholesale'      => 'Wholesale',
+                    'yes'               => 'Yes',
+                    'no'                => 'No',
                 ],
             ],
 
@@ -1019,6 +1022,9 @@ return [
                 'attributes-info'          => 'Add custom attributes to the form.',
                 'background-color'         => 'Background Color',
                 'create-lead'              => 'Create Lead',
+                'lead-type'                => 'Lead Type',
+                'lead-type-default'        => 'Default (first lead type)',
+                'lead-type-info'           => 'Leads created from this form are filed under this type.',
                 'customize-webform'        => 'Customize Webform',
                 'customize-webform-info'   => 'Customize your web form with element colors of your choosing.',
                 'description'              => 'Description',
@@ -1051,6 +1057,9 @@ return [
                 'copied'                    => 'Copied',
                 'copy'                      => 'Copy',
                 'create-lead'               => 'Create Lead',
+                'lead-type'                 => 'Lead Type',
+                'lead-type-default'         => 'Default (first lead type)',
+                'lead-type-info'            => 'Leads created from this form are filed under this type.',
                 'customize-webform'         => 'Customize Webform',
                 'customize-webform-info'    => 'Customize your web form with element colors of your choosing.',
                 'description'               => 'Description',
@@ -2278,6 +2287,14 @@ return [
                 'title'       => 'Top Products',
                 'empty-title' => 'No Products Found',
                 'empty-info'  => 'No products available for selected interval',
+            ],
+
+            'top-tire-sizes' => [
+                'title'       => 'Top Tire Sizes',
+                'top-count'   => 'Top :count',
+                'leads-count' => ':count leads',
+                'empty-title' => 'No Tire Sizes Found',
+                'empty-info'  => 'No tire sizes requested in the selected interval',
             ],
 
             'top-persons' => [

@@ -156,8 +156,41 @@
                                 value="1"
                                 :label="trans('admin::app.settings.webforms.edit.create-lead')"
                                 :checked="(bool) $webForm->create_lead"
+                                v-model="createLead"
                             />
 
+                        </x-admin::form.control-group>
+
+                        <!-- Lead Type -->
+                        <x-admin::form.control-group>
+                            <x-admin::form.control-group.label for="lead_type_id">
+                                @lang('admin::app.settings.webforms.edit.lead-type')
+                            </x-admin::form.control-group.label>
+
+                            <x-admin::form.control-group.control
+                                type="select"
+                                name="lead_type_id"
+                                id="lead_type_id"
+                                :value="old('lead_type_id', $webForm->lead_type_id)"
+                                :label="trans('admin::app.settings.webforms.edit.lead-type')"
+                            >
+                                <option value="">
+                                    @lang('admin::app.settings.webforms.edit.lead-type-default')
+                                </option>
+
+                                @foreach ($leadTypes as $leadType)
+                                    <option
+                                        value="{{ $leadType->id }}"
+                                        {{ old('lead_type_id', $webForm->lead_type_id) == $leadType->id ? 'selected' : '' }}
+                                    >
+                                        {{ $leadType->name }}
+                                    </option>
+                                @endforeach
+                            </x-admin::form.control-group.control>
+
+                            <p class="mt-1 text-xs text-gray-600 dark:text-gray-300">
+                                @lang('admin::app.settings.webforms.edit.lead-type-info')
+                            </p>
                         </x-admin::form.control-group>
 
                         <!-- Customize webform -->
@@ -308,6 +341,7 @@
                                 </x-slot>
 
                                 <x-slot:menu class="max-h-80 overflow-y-auto !p-0 dark:border-gray-800">
+                                    <!-- Lead fields only make sense while the form creates a lead. -->
                                     <template v-if="createLead">
                                         <div class="m-2 text-lg font-bold">
                                             @lang('admin::app.settings.webforms.edit.leads')
@@ -324,7 +358,9 @@
                                         </span>
                                     </template>
 
-                                    <template v-else>
+                                    <!-- Person fields stay available either way: a lead is always
+                                         attached to a person, so both sets belong on the form. -->
+                                    <template>
                                         <div class="m-2 text-lg font-bold">
                                             @lang('admin::app.settings.webforms.edit.person')
                                         </div>

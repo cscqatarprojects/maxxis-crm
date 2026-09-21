@@ -51,8 +51,8 @@
             @include('admin::dashboard.index.total-leads')
 
             <div class="flex gap-4 max-lg:flex-wrap">
-                <!-- Total Products -->
-                @include('admin::dashboard.index.top-selling-products')
+                <!-- Most Requested Tire Sizes -->
+                @include('admin::dashboard.index.top-tire-sizes')
 
                 <!-- Total Persons -->
                 @include('admin::dashboard.index.top-persons')

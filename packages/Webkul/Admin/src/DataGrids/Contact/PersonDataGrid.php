@@ -27,6 +27,7 @@ class PersonDataGrid extends DataGrid
                 'persons.name as person_name',
                 'persons.emails',
                 'persons.contact_numbers',
+                'persons.is_wholesale',
                 'organizations.name as organization',
                 'organizations.id as organization_id'
             )
@@ -39,6 +40,7 @@ class PersonDataGrid extends DataGrid
         $this->addFilter('id', 'persons.id');
         $this->addFilter('person_name', 'persons.name');
         $this->addFilter('organization', 'organizations.name');
+        $this->addFilter('is_wholesale', 'persons.is_wholesale');
 
         return $queryBuilder;
     }
@@ -84,6 +86,16 @@ class PersonDataGrid extends DataGrid
             'filterable' => true,
             'searchable' => true,
             'closure'    => fn ($row) => collect(json_decode($row->contact_numbers, true) ?? [])->pluck('value')->join(', '),
+        ]);
+
+        $this->addColumn([
+            'index'      => 'is_wholesale',
+            'label'      => trans('admin::app.contacts.persons.index.datagrid.is-wholesale'),
+            'type'       => 'boolean',
+            'sortable'   => true,
+            'filterable' => true,
+            'searchable' => false,
+            'closure'    => fn ($row) => trans('admin::app.contacts.persons.index.datagrid.'.($row->is_wholesale ? 'yes' : 'no')),
         ]);
 
         $this->addColumn([

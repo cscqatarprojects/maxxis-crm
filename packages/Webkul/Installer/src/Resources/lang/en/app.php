@@ -18,6 +18,7 @@ return [
             'persons' => [
                 'contact-numbers' => 'Contact Numbers',
                 'emails'          => 'Emails',
+                'is-wholesale'    => 'Wholesale Customer',
                 'job-title'       => 'Job Title',
                 'name'            => 'Name',
                 'organization'    => 'Organization',

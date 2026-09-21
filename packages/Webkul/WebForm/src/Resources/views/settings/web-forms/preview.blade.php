@@ -84,7 +84,51 @@
                     };
                 },
 
+                mounted() {
+                    this.$nextTick(this.prefillFromQueryString);
+                },
+
                 methods: {
+                    /**
+                     * Fill fields from the query string, so a link can arrive with what
+                     * is already known about the visitor (e.g. the WhatsApp number a
+                     * chatbot sent them from): ?contact_numbers=0791234567&name=Store.
+                     *
+                     * Each parameter is matched against the attribute code inside the
+                     * input name, which is "persons[name]" for plain fields and
+                     * "persons[contact_numbers][0][value]" for phone and email ones.
+                     * Values are assigned, never rendered as markup, and the server
+                     * validates them exactly as it does a typed submission.
+                     */
+                    prefillFromQueryString() {
+                        const form = this.$refs.webForm;
+
+                        if (! form) {
+                            return;
+                        }
+
+                        new URLSearchParams(window.location.search).forEach((value, key) => {
+                            if (! value || ! /^[a-zA-Z0-9_]+$/.test(key)) {
+                                return;
+                            }
+
+                            const pattern = new RegExp('\\[' + key + '\\](\\[0\\]\\[value\\])?$');
+
+                            form.querySelectorAll('input:not([type="hidden"]), textarea').forEach(input => {
+                                if (! pattern.test(input.name) || input.value) {
+                                    return;
+                                }
+
+                                input.value = value;
+
+                                // vee-validate tracks its own copy of the value, so a plain
+                                // assignment would still submit as empty and fail "required".
+                                input.dispatchEvent(new Event('input', { bubbles: true }));
+                                input.dispatchEvent(new Event('change', { bubbles: true }));
+                            });
+                        });
+                    },
+
                     create(params, { resetForm, setErrors }) {
                         this.isStoring = true;
 

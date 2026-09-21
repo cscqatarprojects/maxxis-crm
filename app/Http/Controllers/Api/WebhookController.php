@@ -267,6 +267,62 @@ class WebhookController extends Controller
     }
 
     /**
+     * Tell the chatbot whether a phone number belongs to a wholesale customer.
+     *
+     * Numbers reach us in every shape the customer typed them in ("0791234567",
+     * "+962 79 123 4567", "962791234567"), so both sides are reduced to their
+     * last 9 digits before matching. contact_numbers is a JSON column, hence the
+     * LIKE against the serialized payload rather than a column comparison.
+     */
+    public function checkWholesalePhone(Request $request): JsonResponse
+    {
+        $phone = $this->normalizePhone((string) $request->query('phone', ''));
+
+        if ($phone === '') {
+            return response()->json([
+                'success'      => false,
+                'message'      => 'A phone number is required',
+                'is_wholesale' => false,
+            ], 422);
+        }
+
+        try {
+            $person = app(PersonRepository::class)->findWhere([
+                ['is_wholesale', '=', 1],
+                ['contact_numbers', 'like', '%'.$phone.'%'],
+            ])->first();
+
+            return response()->json([
+                'success'      => true,
+                'phone'        => $phone,
+                'is_wholesale' => (bool) $person,
+                'person_id'    => $person?->id,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Wholesale phone check failed', [
+                'phone' => $phone,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success'      => false,
+                'message'      => 'Wholesale check failed',
+                'is_wholesale' => false,
+            ], 500);
+        }
+    }
+
+    /**
+     * Reduce a phone number to the last 9 digits used for matching.
+     */
+    protected function normalizePhone(string $phone): string
+    {
+        $digits = preg_replace('/\D+/', '', $phone) ?? '';
+
+        return strlen($digits) > 9 ? substr($digits, -9) : $digits;
+    }
+
+    /**
      * Health check for webhook endpoint
      */
     public function health(): JsonResponse

@@ -14,6 +14,11 @@ use Webkul\Admin\Helpers\Reporting\Quote;
 class Dashboard
 {
     /**
+     * Row counts the tire sizes widget offers, first one being the default.
+     */
+    public const TIRE_SIZE_LIMITS = [10, 5, 3];
+
+    /**
      * Create a controller instance.
      *
      * @return void
@@ -102,6 +107,24 @@ class Dashboard
     public function getTopSellingProducts(): Collection
     {
         return $this->productReporting->getTopSellingProductsByRevenue(5);
+    }
+
+    /**
+     * Returns the most requested tire sizes.
+     *
+     * The widget lets the user pick how many rows to show; anything outside the
+     * offered choices falls back to 10 so a hand-crafted request cannot ask for
+     * an unbounded list.
+     */
+    public function getTopTireSizes(): Collection
+    {
+        $limit = (int) request()->query('limit', self::TIRE_SIZE_LIMITS[0]);
+
+        if (! in_array($limit, self::TIRE_SIZE_LIMITS, true)) {
+            $limit = self::TIRE_SIZE_LIMITS[0];
+        }
+
+        return $this->leadReporting->getTopTireSizes($limit);
     }
 
     /**

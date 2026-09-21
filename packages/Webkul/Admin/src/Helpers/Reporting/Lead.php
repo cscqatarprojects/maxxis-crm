@@ -3,7 +3,9 @@
 namespace Webkul\Admin\Helpers\Reporting;
 
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Lead\Repositories\LeadRepository;
 use Webkul\Lead\Repositories\StageRepository;
 
@@ -336,6 +338,49 @@ class Lead extends AbstractReporting
             ->groupBy('lead_pipeline_stage_id')
             ->orderByDesc('total')
             ->get();
+    }
+
+    /**
+     * Returns the tire sizes leads asked about most in the selected interval.
+     *
+     * Counts every lead carrying a tire_size value, whatever its stage: unlike
+     * the products report this does not need the lead to be closed or to have a
+     * product attached, because chatbot leads carry neither.
+     *
+     * @param  int  $limit
+     */
+    public function getTopTireSizes($limit = 10): Collection
+    {
+        $attributeId = app(AttributeRepository::class)
+            ->findOneWhere(['entity_type' => 'leads', 'code' => 'tire_size'])
+            ?->id;
+
+        if (! $attributeId) {
+            return collect();
+        }
+
+        return DB::table('attribute_values')
+            ->join('leads', 'leads.id', '=', 'attribute_values.entity_id')
+            ->select(
+                'attribute_values.text_value as name',
+                DB::raw('COUNT(DISTINCT '.DB::getTablePrefix().'leads.id) as total_leads'),
+                DB::raw('COALESCE(SUM('.DB::getTablePrefix().'leads.lead_value), 0) as lead_value')
+            )
+            ->where('attribute_values.entity_type', 'leads')
+            ->where('attribute_values.attribute_id', $attributeId)
+            ->whereNotNull('attribute_values.text_value')
+            ->where('attribute_values.text_value', '<>', '')
+            ->whereBetween('leads.created_at', [$this->startDate, $this->endDate])
+            ->groupBy('attribute_values.text_value')
+            ->orderByDesc('total_leads')
+            ->limit($limit)
+            ->get()
+            ->map(fn ($item) => [
+                'name'               => $item->name,
+                'total_leads'        => (int) $item->total_leads,
+                'lead_value'         => $item->lead_value,
+                'formatted_value'    => core()->formatBasePrice($item->lead_value),
+            ]);
     }
 
     /**

@@ -48,6 +48,10 @@ class WebFormController extends Controller
      */
     public function formStore(int $id): JsonResponse
     {
+        $webForm = $this->webFormRepository->findOrFail($id);
+
+        $this->dropFieldsNotOnTheForm($webForm);
+
         $person = $this->personRepository
             ->getModel()
             ->where('emails', 'like', '%'.request('persons.emails.0.value').'%')
@@ -58,8 +62,6 @@ class WebFormController extends Controller
         }
 
         app(WebForm::class);
-
-        $webForm = $this->webFormRepository->findOrFail($id);
 
         if ($webForm->create_lead) {
             request()->request->add(['entity_type' => 'leads']);
@@ -96,7 +98,9 @@ class WebFormController extends Controller
                 $data['lead_source_id'] = $source->id;
             }
 
-            $data['lead_type_id'] = request('leads.lead_type_id') ?: $this->typeRepository->first()->id;
+            $data['lead_type_id'] = request('leads.lead_type_id')
+                ?: $webForm->lead_type_id
+                ?: $this->typeRepository->first()->id;
 
             $lead = $this->leadRepository->create($data);
 
@@ -140,6 +144,43 @@ class WebFormController extends Controller
         }
 
         return view('web_form::settings.web-forms.preview', compact('webForm'));
+    }
+
+    /**
+     * Keep only the fields the form actually offers.
+     *
+     * This endpoint is public and the submitted arrays are mass assigned onto
+     * the person and the lead, so a hand-crafted request could otherwise set any
+     * fillable column — "is_wholesale" among them, which would let a visitor
+     * grant themselves wholesale pricing. Anything the form does not declare is
+     * dropped before validation ever sees it.
+     */
+    protected function dropFieldsNotOnTheForm($webForm): void
+    {
+        $allowed = ['persons' => [], 'leads' => []];
+
+        foreach ($webForm->attributes as $formAttribute) {
+            $attribute = $formAttribute->attribute;
+
+            if (! $attribute) {
+                continue;
+            }
+
+            $allowed[$attribute->entity_type][] = $attribute->code;
+        }
+
+        foreach ($allowed as $entityType => $codes) {
+            $submitted = request($entityType);
+
+            if (! is_array($submitted)) {
+                continue;
+            }
+
+            request()->request->set(
+                $entityType,
+                array_intersect_key($submitted, array_flip($codes))
+            );
+        }
     }
 
     /**

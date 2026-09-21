@@ -65,7 +65,9 @@ class WebFormController extends Controller
             }
         }
 
-        return view('admin::settings.web-forms.create', compact('attributes'));
+        $leadTypes = $this->typeRepository->all();
+
+        return view('admin::settings.web-forms.create', compact('attributes', 'leadTypes'));
     }
 
     /**
@@ -105,7 +107,9 @@ class WebFormController extends Controller
             ['id', 'NOTIN', $webForm->attributes()->pluck('attribute_id')->toArray()],
         ]);
 
-        return view('admin::settings.web-forms.edit', compact('webForm', 'attributes'));
+        $leadTypes = $this->typeRepository->all();
+
+        return view('admin::settings.web-forms.edit', compact('webForm', 'attributes', 'leadTypes'));
     }
 
     /**
