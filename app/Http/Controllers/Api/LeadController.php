@@ -190,26 +190,24 @@ class LeadController extends Controller
             ];
         }
 
-        // Match an existing person by phone number first (more reliable than
-        // name), then fall back to name so anonymous "Guest User" leads don't
-        // all collapse onto one another.
-        $person = null;
+        // The phone number is the only thing that identifies a customer. Match on
+        // its last 9 digits so "0791234567", "+962 79 123 4567" and
+        // "962791234567" (WhatsApp) are the same person, the rule the chatbot
+        // uses for wholesale checks too. Names are never matched: customers often
+        // share a name, and merging them would attach the lead to someone else.
+        $phoneKey = substr(preg_replace('/\D+/', '', $mobile), -9);
 
-        if ($mobile !== '') {
+        if ($phoneKey !== '') {
             $person = $this->personRepository->findWhere([
-                ['contact_numbers', 'like', '%'.$mobile.'%'],
+                ['contact_numbers', 'like', '%'.$phoneKey.'%'],
             ])->first();
+
+            if ($person) {
+                return $person;
+            }
         }
 
-        if (! $person) {
-            $person = $this->personRepository->findWhere(['name' => $data['contact_name']])->first();
-        }
-
-        if (! $person) {
-            $person = $this->personRepository->create($personData);
-        }
-
-        return $person;
+        return $this->personRepository->create($personData);
     }
 
     /**
